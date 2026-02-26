@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fi" class="preload">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judovisa 道場</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Taustadekoraatiot -->
+  <div class="bg-layer">
+    <div class="bg-kanji" aria-hidden="true">柔</div>
+    <div class="bg-circle c1"></div>
+    <div class="bg-circle c2"></div>
+    <div class="bg-lines" aria-hidden="true"></div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: AUTH (kirjautuminen/rekisteröityminen) ========== -->
+  <div id="view-auth" class="view active">
+    <div class="auth-container">
+      <div class="auth-logo">
+        <div class="logo-kanji">柔</div>
+        <div class="logo-text">
+          <span class="logo-main">JUDOVISA</span>
+          <span class="logo-sub">道場 · DOJO</span>
+        </div>
+      </div>
+
+      <!-- Välilehdet -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" data-tab="login">Kirjaudu</button>
+        <button class="tab-btn" data-tab="register">Rekisteröidy</button>
+      </div>
+
+      <!-- Kirjautumislomake -->
+      <form id="form-login" class="auth-form active" novalidate>
+        <div class="field-group">
+          <label for="login-username">Käyttäjätunnus</label>
+          <input type="text" id="login-username" autocomplete="username" placeholder="käyttäjätunnus" required>
+        </div>
+        <div class="field-group">
+          <label for="login-password">Salasana</label>
+          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <div class="auth-message" id="login-message"></div>
+        <button type="submit" class="btn-primary">
+          <span>Kirjaudu sisään</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M14 12H3"/></svg>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-forgot">Unohditko salasanan?</button>
+      </form>
+
+      <!-- Rekisteröitymislomake -->
+      <form id="form-register" class="auth-form" novalidate>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="reg-firstname">Etunimi</label>
+            <input type="text" id="reg-firstname" placeholder="Etunimi" required>
+          </div>
+          <div class="field-group">
+            <label for="reg-lastname">Sukunimi</label>
+            <input type="text" id="reg-lastname" placeholder="Sukunimi" required>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="reg-username">Käyttäjätunnus</label>
+          <input type="text" id="reg-username" autocomplete="username" placeholder="käyttäjätunnus" required>
+        </div>
+        <div class="field-group">
+          <label for="reg-email">Sähköposti</label>
+          <input type="email" id="reg-email" autocomplete="email" placeholder="sinä@esimerkki.fi" required>
+        </div>
+        <div class="field-group">
+          <label for="reg-password">Salasana <span class="hint">(min. 8 merkkiä)</span></label>
+          <input type="password" id="reg-password" autocomplete="new-password" placeholder="••••••••" required>
+        </div>
+        <div class="auth-message" id="register-message"></div>
+        <button type="submit" class="btn-primary">
+          <span>Luo tili</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m22 21-3-3m0 0a5 5 0 1 0-7.07-7.07A5 5 0 0 0 19 18z"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: SALASANAN PALAUTUS ========== -->
+  <div id="view-forgot" class="view">
+    <div class="auth-container narrow">
+      <button class="btn-back" id="btn-back-from-forgot">← Takaisin</button>
+      <h2 class="form-title">Palauta salasana</h2>
+      <p class="form-desc">Syötä sähköpostiosoitteesi niin lähetämme palautuslinkin.</p>
+      <form id="form-forgot" novalidate>
+        <div class="field-group">
+          <label for="forgot-email">Sähköposti</label>
+          <input type="email" id="forgot-email" placeholder="sinä@esimerkki.fi" required>
+        </div>
+        <div class="auth-message" id="forgot-message"></div>
+        <button type="submit" class="btn-primary"><span>Lähetä linkki</span></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: SALASANAN VAIHTO (reset token URL:ssa) ========== -->
+  <div id="view-reset" class="view">
+    <div class="auth-container narrow">
+      <h2 class="form-title">Uusi salasana</h2>
+      <form id="form-reset" novalidate>
+        <div class="field-group">
+          <label for="reset-password">Uusi salasana <span class="hint">(min. 8 merkkiä)</span></label>
+          <input type="password" id="reset-password" placeholder="••••••••" required>
+        </div>
+        <div class="field-group">
+          <label for="reset-password2">Vahvista salasana</label>
+          <input type="password" id="reset-password2" placeholder="••••••••" required>
+        </div>
+        <div class="auth-message" id="reset-message"></div>
+        <button type="submit" class="btn-primary"><span>Vaihda salasana</span></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: PELI ========== -->
+  <div id="view-game" class="view">
+
+    <!-- Yläpalkki -->
+    <header class="game-header">
+      <div class="header-logo">
+        <span class="logo-kanji-sm">柔</span>
+        <span class="header-title">JUDOVISA</span>
+      </div>
+      <div class="header-user" id="header-user-info">
+        <span id="header-username"></span>
+        <span class="user-badge" id="header-role"></span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-profile" title="Muokkaa profiilia">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+        </button>
+        <button class="btn-icon" id="btn-admin" title="Admin" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </button>
+        <button class="btn-icon danger" id="btn-logout" title="Kirjaudu ulos">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="game-layout">
+
+      <!-- Pääsisältö -->
+      <main class="game-main">
+
+        <!-- Aloitusnäyttö -->
+        <div id="screen-start" class="screen active">
+          <div class="start-content">
+            <div class="start-kanji-display">道</div>
+            <h1 class="start-title">Judovisa</h1>
+            <p class="start-subtitle">Testaa judotietämyksesi</p>
+            <div class="start-info">
+              <div class="info-chip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                7 kategoríaa
+              </div>
+              <div class="info-chip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                1 piste / oikea vastaus
+              </div>
+            </div>
+            <button class="btn-start" id="btn-start-game">
+              始める · Aloita visa
+            </button>
+            <div class="my-best-score" id="my-best-score"></div>
+          </div>
+        </div>
+
+        <!-- Kysymysnäyttö -->
+        <div id="screen-question" class="screen">
+          <!-- Edistymispalkki -->
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-label">
+              <span id="progress-current">1</span> / <span id="progress-total">7</span>
+            </div>
+          </div>
+
+          <!-- Kysymyskortti -->
+          <div class="question-card" id="question-card">
+            <div class="question-category" id="q-category"></div>
+            <h2 class="question-text" id="q-text"></h2>
+            <div class="attempts-display">
+              <span class="attempts-label">Yrityksiä jäljellä:</span>
+              <div class="attempts-dots" id="attempts-dots"></div>
+            </div>
+
+            <!-- Syötekenttä -->
+            <div class="answer-area">
+              <div class="answer-input-wrap">
+                <input type="text" 
+                       id="answer-input" 
+                       class="answer-input" 
+                       placeholder="Kirjoita vastaus..." 
+                       autocomplete="off"
+                       autocorrect="off"
+                       spellcheck="false">
+                <button class="btn-check" id="btn-check">
+                  確認
+                  <span class="btn-sub">Tarkista</span>
+                </button>
+              </div>
+              <div class="feedback-area" id="feedback-area"></div>
+            </div>
+
+            <!-- Annetut vastaukset -->
+            <div class="given-answers-wrap">
+              <div class="given-answers-title" id="given-title"></div>
+              <div class="given-answers-list" id="given-answers"></div>
+            </div>
+          </div>
+
+          <!-- Kategoriavaihto -->
+          <button class="btn-skip" id="btn-skip">Ohita kysymys →</button>
+        </div>
+
+        <!-- Tulosnäyttö -->
+        <div id="screen-results" class="screen">
+          <div class="results-container">
+            <div class="results-hero">
+              <div class="results-kanji" id="results-kanji">優</div>
+              <h2 class="results-title" id="results-title">Erinomainen!</h2>
+              <div class="results-score-big">
+                <span id="results-points">0</span>
+                <span class="results-points-label">pistettä</span>
+              </div>
+              <div class="results-percentage" id="results-pct"></div>
+            </div>
+
+            <div class="results-breakdown">
+              <div class="breakdown-item correct">
+                <div class="breakdown-count" id="res-correct">0</div>
+                <div class="breakdown-label">Oikein</div>
+              </div>
+              <div class="breakdown-item wrong">
+                <div class="breakdown-count" id="res-wrong">0</div>
+                <div class="breakdown-label">Väärin</div>
+              </div>
+              <div class="breakdown-item skipped">
+                <div class="breakdown-count" id="res-skipped">0</div>
+                <div class="breakdown-label">Ohitettu</div>
+              </div>
+            </div>
+
+            <!-- Kategoria per kategoria tulokset -->
+            <div class="category-results" id="category-results"></div>
+
+            <div class="results-actions">
+              <button class="btn-primary" id="btn-play-again">
+                <span>Pelaa uudelleen</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Sivupalkki: Top 10 -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h3 class="sidebar-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            順位 · TOP 10
+          </h3>
+          <ol class="leaderboard" id="leaderboard">
+            <li class="lb-loading">Ladataan...</li>
+          </ol>
+        </div>
+
+        <!-- Omat tulokset -->
+        <div class="sidebar-card my-scores-card">
+          <h3 class="sidebar-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Omat tulokset
+          </h3>
+          <div id="my-scores-list" class="my-scores"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: PROFIILI ========== -->
+  <div id="view-profile" class="view">
+    <div class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" id="btn-close-profile">✕</button>
+        <h2 class="modal-title">Profiili 個人情報</h2>
+
+        <div class="profile-tabs">
+          <button class="tab-btn active" data-ptab="edit">Muokkaa tietoja</button>
+          <button class="tab-btn" data-ptab="password">Vaihda salasana</button>
+          <button class="tab-btn danger-tab" data-ptab="delete">Poista tili</button>
+        </div>
+
+        <!-- Tietojen muokkaus -->
+        <form id="form-profile-edit" class="profile-form active" novalidate>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Etunimi</label>
+              <input type="text" id="edit-firstname" placeholder="Etunimi">
+            </div>
+            <div class="field-group">
+              <label>Sukunimi</label>
+              <input type="text" id="edit-lastname" placeholder="Sukunimi">
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Käyttäjätunnus</label>
+            <input type="text" id="edit-username" placeholder="käyttäjätunnus">
+          </div>
+          <div class="field-group">
+            <label>Sähköposti</label>
+            <input type="email" id="edit-email" placeholder="sinä@esimerkki.fi">
+          </div>
+          <div class="auth-message" id="profile-edit-message"></div>
+          <button type="submit" class="btn-primary"><span>Tallenna muutokset</span></button>
+        </form>
+
+        <!-- Salasanan vaihto -->
+        <form id="form-change-password" class="profile-form" novalidate>
+          <div class="field-group">
+            <label>Nykyinen salasana</label>
+            <input type="password" id="pw-current" placeholder="••••••••">
+          </div>
+          <div class="field-group">
+            <label>Uusi salasana</label>
+            <input type="password" id="pw-new" placeholder="••••••••">
+          </div>
+          <div class="field-group">
+            <label>Vahvista uusi salasana</label>
+            <input type="password" id="pw-new2" placeholder="••••••••">
+          </div>
+          <div class="auth-message" id="profile-pw-message"></div>
+          <button type="submit" class="btn-primary"><span>Vaihda salasana</span></button>
+        </form>
+
+        <!-- Tilin poisto -->
+        <div id="form-delete-account" class="profile-form">
+          <div class="delete-warning">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p>Tilin poistaminen on pysyvää. Kaikki tietosi poistetaan eikä tätä voi peruuttaa.</p>
+          </div>
+          <div class="field-group">
+            <label>Vahvista salasanalla</label>
+            <input type="password" id="delete-confirm-pw" placeholder="••••••••">
+          </div>
+          <div class="auth-message" id="profile-delete-message"></div>
+          <button type="button" class="btn-danger" id="btn-confirm-delete">Poista tili pysyvästi</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NÄKYMÄ: ADMIN ========== -->
+  <div id="view-admin" class="view">
+    <div class="admin-container">
+      <div class="admin-header">
+        <h2 class="admin-title">Admin-paneeli 管理</h2>
+        <button class="btn-ghost" id="btn-close-admin">← Takaisin peliin</button>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="tab-btn active" data-atab="users">Käyttäjät</button>
+        <button class="tab-btn" data-atab="logs">Lokitapahtumat</button>
+        <button class="tab-btn" data-atab="stats">Tilastot</button>
+      </div>
+
+      <!-- Käyttäjät -->
+      <div id="admin-users" class="admin-panel active">
+        <div class="admin-toolbar">
+          <input type="text" id="admin-user-search" placeholder="Hae nimellä tai sähköpostilla..." class="admin-search">
+          <select id="admin-role-filter" class="admin-select">
+            <option value="">Kaikki roolit</option>
+            <option value="player">Pelaaja</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div id="admin-users-list" class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Käyttäjätunnus</th>
+                <th>Nimi</th>
+                <th>Sähköposti</th>
+                <th>Rooli</th>
+                <th>Rekisteröitynyt</th>
+                <th>Toiminnot</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+        <div class="admin-pagination" id="admin-users-pagination"></div>
+      </div>
+
+      <!-- Lokitapahtumat -->
+      <div id="admin-logs" class="admin-panel">
+        <div class="admin-toolbar">
+          <select id="admin-log-event" class="admin-select">
+            <option value="">Kaikki tapahtumat</option>
+            <option value="login">Kirjautuminen</option>
+            <option value="login_failed">Epäonnistunut kirjautuminen</option>
+            <option value="register">Rekisteröityminen</option>
+            <option value="logout">Uloskirjautuminen</option>
+            <option value="password_reset_request">Salasanan palautuspyyntö</option>
+            <option value="account_deleted">Tilin poisto</option>
+            <option value="quiz_finished">Visa suoritettu</option>
+            <option value="role_changed">Roolin vaihto</option>
+          </select>
+          <input type="date" id="admin-log-start" class="admin-select">
+          <input type="date" id="admin-log-end" class="admin-select">
+          <button class="btn-primary small" id="btn-filter-logs"><span>Hae</span></button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Aika</th>
+                <th>Käyttäjä</th>
+                <th>Tapahtuma</th>
+                <th>Kohde</th>
+                <th>Tiedot</th>
+              </tr>
+            </thead>
+            <tbody id="admin-logs-tbody"></tbody>
+          </table>
+        </div>
+        <div class="admin-pagination" id="admin-logs-pagination"></div>
+      </div>
+
+      <!-- Tilastot -->
+      <div id="admin-stats" class="admin-panel">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-players">—</div>
+            <div class="stat-label">Pelaajat</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-admins">—</div>
+            <div class="stat-label">Adminit</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-scores">—</div>
+            <div class="stat-label">Pelisuoritukset</div>
+          </div>
+        </div>
+        <h3 class="recent-logs-title">Viimeisimmät tapahtumat</h3>
+        <div id="stats-recent-logs"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast-ilmoitukset -->
+  <div id="toast-container"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
