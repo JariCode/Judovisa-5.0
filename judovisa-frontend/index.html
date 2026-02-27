@@ -44,7 +44,7 @@
         </div>
         <div class="field-group">
           <label for="login-password">Salasana</label>
-          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" required>
+          <div class="pw-wrap"><input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••" required><button type="button" class="pw-toggle" onclick="togglePassword('login-password')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
         <div class="auth-message" id="login-message"></div>
         <button type="submit" class="btn-primary">
@@ -76,7 +76,7 @@
         </div>
         <div class="field-group">
           <label for="reg-password">Salasana <span class="hint">(min. 8 merkkiä)</span></label>
-          <input type="password" id="reg-password" autocomplete="new-password" placeholder="••••••••" required>
+          <div class="pw-wrap"><input type="password" id="reg-password" autocomplete="new-password" placeholder="••••••••" required><button type="button" class="pw-toggle" onclick="togglePassword('reg-password')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
         <div class="auth-message" id="register-message"></div>
         <button type="submit" class="btn-primary">
@@ -111,11 +111,11 @@
       <form id="form-reset" novalidate>
         <div class="field-group">
           <label for="reset-password">Uusi salasana <span class="hint">(min. 8 merkkiä)</span></label>
-          <input type="password" id="reset-password" placeholder="••••••••" required>
+          <div class="pw-wrap"><input type="password" id="reset-password" placeholder="••••••••" required><button type="button" class="pw-toggle" onclick="togglePassword('reset-password')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
         <div class="field-group">
           <label for="reset-password2">Vahvista salasana</label>
-          <input type="password" id="reset-password2" placeholder="••••••••" required>
+          <div class="pw-wrap"><input type="password" id="reset-password2" placeholder="••••••••" required><button type="button" class="pw-toggle" onclick="togglePassword('reset-password2')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
         <div class="auth-message" id="reset-message"></div>
         <button type="submit" class="btn-primary"><span>Vaihda salasana</span></button>
@@ -356,7 +356,7 @@
           </div>
           <div class="field-group">
             <label>Vahvista salasanalla</label>
-            <input type="password" id="delete-confirm-pw" placeholder="••••••••">
+            <div class="pw-wrap"><input type="password" id="delete-confirm-pw" placeholder="••••••••"><button type="button" class="pw-toggle" onclick="togglePassword('delete-confirm-pw')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           </div>
           <div class="auth-message" id="profile-delete-message"></div>
           <button type="button" class="btn-danger" id="btn-confirm-delete">Poista tili pysyvästi</button>
@@ -475,5 +475,20 @@
   <script src="js/profile.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/app.js"></script>
+
+  <script>
+    // Näytä/piilota salasana
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const btn = input.parentElement.querySelector('.pw-toggle');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      } else {
+        input.type = 'password';
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      }
+    }
+  </script>
 </body>
 </html>

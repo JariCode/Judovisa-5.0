@@ -11,8 +11,15 @@ const personSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true, // Yksi Person per User
+      unique: true,
       index: true,
+    },
+    // Käyttäjänimen näyttömuoto — säilyttää alkuperäisen kirjoitusasun (esim. "Jarppa")
+    // User.username on aina lowercase (haku/vertailu), displayName on näyttämistä varten
+    displayName: {
+      type: String,
+      trim: true,
+      maxlength: [30, 'Näyttönimi max 30 merkkiä'],
     },
     firstName: {
       type: String,
@@ -40,7 +47,6 @@ const personSchema = new mongoose.Schema(
   }
 );
 
-// Virtuaali: koko nimi
 personSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });

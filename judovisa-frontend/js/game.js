@@ -1,100 +1,13 @@
 // js/game.js
 // Visalogiikka: kysymykset, vastausten tarkistus, pisteet
+// MUUTOS: Kysymykset haetaan backendistä, vastaukset tarkistetaan backendissä
+// Staattiset vastaukset POISTETTU frontendistä tietoturvan vuoksi
 
 const game = (() => {
 
-  // Kaikki kategoriat ja kysymykset (vastaukset backendistä tai staattinen)
-  // Rakenne: { id, category, jpName, text, answers[], attempts }
-  const QUESTIONS = [
-    {
-      id: 'osaekomi',
-      category: 'Osaekomi-Waza',
-      jpName: '抑込技',
-      text: 'Kerro kuusi sidontaa (Osaekomi-Waza)',
-      attempts: 6,
-      answers: [
-        'kesa gatame','hon kesa gatame','kuzure kesa gatame','makura kesa gatame',
-        'ushiro kesa gatame','kata gatame','kami shiho gatame','kuzure kami shiho gatame',
-        'yoko shiho gatame','tate shiho gatame','uki gatame','ura gatame'
-      ]
-    },
-    {
-      id: 'shimewaza',
-      category: 'Shime-Waza',
-      jpName: '絞技',
-      text: 'Kerro kuusi kuristusta (Shime-Waza)',
-      attempts: 6,
-      answers: [
-        'nami juji jime','gyaku juji jime','kata juji jime','hadaka jime',
-        'okuri eri jime','kataha jime','katate jime','ryote jime',
-        'sode guruma jime','tsukkomi jime','sankaku jime','do jime','koshi jime'
-      ]
-    },
-    {
-      id: 'kansetsuwaza',
-      category: 'Kansetsu-Waza',
-      jpName: '関節技',
-      text: 'Kerro kuusi nivellukkoa (Kansetsu-Waza)',
-      attempts: 6,
-      answers: [
-        'ude garami','ude hishigi juji gatame','ude hishigi ude gatame','ude hishigi hiza gatame',
-        'ude hishigi waki gatame','ude hishigi hara gatame','ude hishigi ashi gatame',
-        'ude hishigi te gatame','ude hishigi sankaku gatame','ashi garami','juji gatame',
-        'hiza gatame','waki gatame','te gatame','sankaku gatame','hara gatame','ashi gatame','ude gatame'
-      ]
-    },
-    {
-      id: 'tewaza',
-      category: 'Te-Waza',
-      jpName: '手技',
-      text: 'Kerro kuusi käsiheittoa (Te-Waza)',
-      attempts: 6,
-      answers: [
-        'seoi nage','ippon seoi nage','eri seoi nage','morote seoi nage','seoi otoshi',
-        'tai otoshi','kata guruma','sukui nage','obi otoshi','uki otoshi','sumi otoshi',
-        'yama arashi','obi tori gaeshi','morote gari','kuchiki taoshi','kibisu gaeshi',
-        'uchi mata sukashi','ko uchi gaeshi'
-      ]
-    },
-    {
-      id: 'koshiwaza',
-      category: 'Koshi-Waza',
-      jpName: '腰技',
-      text: 'Kerro kuusi lonkkaheittoa (Koshi-Waza)',
-      attempts: 6,
-      answers: [
-        'uki goshi','o goshi','koshi guruma','tsuri komi goshi','sode tsuri komi goshi',
-        'harai goshi','tsuri goshi','hane goshi','utsuri goshi','ushiro goshi'
-      ]
-    },
-    {
-      id: 'masutemiwaza',
-      category: 'Ma-Sutemi-Waza',
-      jpName: '真捨身技',
-      text: 'Kerro neljä selälleen tehtävää uhrautumisheittoa (Ma-Sutemi-Waza)',
-      attempts: 4,
-      answers: [
-        'tomoe nage','sumi gaeshi','hikikomi gaeshi','tawara gaeshi','ura nage'
-      ]
-    },
-    {
-      id: 'yokosutemiwaza',
-      category: 'Yoko-Sutemi-Waza',
-      jpName: '横捨身技',
-      text: 'Kerro kuusi kyljelleen tehtävää uhrautumisheittoa (Yoko-Sutemi-Waza)',
-      attempts: 6,
-      answers: [
-        'yoko otoshi','tani otoshi','hane makikomi','soto makikomi','uchi makikomi',
-        'uki waza','yoko wakare','yoko guruma','yoko gake','daki wakare',
-        'o soto makikomi','uchi mata makikomi','harai makikomi','ko uchi makikomi',
-        'kani basami','kawazu gake'
-      ]
-    }
-  ];
-
   // Pelin tila
   let state = {
-    questions: [],       // sekoitettu kysymyslista
+    questions: [],       // backendistä haettu kysymyslista (EI sisällä vastauksia)
     currentIndex: 0,
     currentAttemptsLeft: 0,
     givenAnswers: [],    // { text, type: 'correct'|'wrong'|'same' }
@@ -104,12 +17,18 @@ const game = (() => {
     totalWrong: 0,
     totalSkipped: 0,
     running: false,
+    checking: false,     // estetään tuplavastaukset kesken API-kutsun
   };
 
   // ---- Apufunktiot ----
+
+  // Normalisoi vain duplikaattitarkistusta varten frontendissä
+  // (backend tekee oman normalisoinnin oikeellisuustarkistukseen)
   function normalize(str) {
-    return str.trim().toLowerCase()
-      .replace(/\s+/g, ' ')
+    return String(str || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s\-_]+/g, '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
   }
@@ -126,22 +45,46 @@ const game = (() => {
   function getQ() { return state.questions[state.currentIndex]; }
 
   // ---- Aloita peli ----
-  function start() {
-    state = {
-      questions: shuffle([...QUESTIONS]),
-      currentIndex: 0,
-      currentAttemptsLeft: 0,
-      givenAnswers: [],
-      correctAnswersGiven: new Set(),
-      sessionScores: [],
-      totalScore: 0,
-      totalWrong: 0,
-      totalSkipped: 0,
-      running: true,
-    };
-    showScreen('screen-question');
-    loadQuestion();
-    updateProgress();
+  async function start() {
+    const btn = document.getElementById('btn-start-game');
+    const span = btn.querySelector('span');
+    btn.disabled = true;
+    if (span) span.textContent = 'Ladataan...';
+
+    try {
+      // Hae kysymykset backendistä — vastauksia EI palauteta frontendiin
+      const res = await api.quiz.getQuestions(10);
+
+      if (!res.ok || !res.questions?.length) {
+        toast('Kysymysten lataus epäonnistui', 'error');
+        return;
+      }
+
+      state = {
+        questions: shuffle(res.questions),
+        currentIndex: 0,
+        currentAttemptsLeft: 0,
+        givenAnswers: [],
+        correctAnswersGiven: new Set(),
+        sessionScores: [],
+        totalScore: 0,
+        totalWrong: 0,
+        totalSkipped: 0,
+        running: true,
+        checking: false,
+      };
+
+      showScreen('screen-question');
+      loadQuestion();
+      updateProgress();
+
+    } catch (err) {
+      console.error('Pelin aloitus epäonnistui:', err);
+      toast('Palvelinvirhe — yritä uudelleen', 'error');
+    } finally {
+      btn.disabled = false;
+      if (span) span.textContent = 'Aloita peli';
+    }
   }
 
   // ---- Lataa kysymys ----
@@ -152,10 +95,11 @@ const game = (() => {
     state.currentAttemptsLeft = q.attempts;
     state.givenAnswers = [];
     state.correctAnswersGiven = new Set();
+    state.checking = false;
 
-    // UI päivitys
-    document.getElementById('q-category').textContent = `${q.jpName} · ${q.category}`;
-    document.getElementById('q-text').textContent = q.text;
+    // UI päivitys — sama kuin ennen
+    document.getElementById('q-category').textContent = `${q.jpName || ''} · ${q.category}`;
+    document.getElementById('q-text').textContent = q.questionText;
     document.getElementById('answer-input').value = '';
     document.getElementById('feedback-area').innerHTML = '';
     document.getElementById('given-answers').innerHTML = '';
@@ -189,9 +133,9 @@ const game = (() => {
     document.getElementById('progress-total').textContent = total;
   }
 
-  // ---- Tarkista vastaus ----
-  function checkAnswer() {
-    if (!state.running) return;
+  // ---- Tarkista vastaus — MUUTOS: kutsuu backendiä ----
+  async function checkAnswer() {
+    if (!state.running || state.checking) return;
 
     const input = document.getElementById('answer-input');
     const raw = input.value;
@@ -207,7 +151,7 @@ const game = (() => {
       return;
     }
 
-    // Tarkista onko jo annettu sama vastaus (oikea tai väärä)
+    // Tarkista onko jo annettu sama vastaus (paikallinen tarkistus — ei turhaa API-kutsua)
     const alreadyGiven = state.givenAnswers.find(a => normalize(a.text) === answer);
     if (alreadyGiven) {
       // SAMA vastaus — käyttää yrityksen
@@ -223,38 +167,60 @@ const game = (() => {
       return;
     }
 
-    // Tarkista onko oikea vastaus
-    const isCorrect = q.answers.some(a => normalize(a) === answer);
+    // Lähetä vastaus backendiin tarkistettavaksi
+    // Backend normalisoi: pienet kirjaimet, välilyönnit/väliviivat missä tahansa
+    state.checking = true;
+    document.getElementById('btn-check').disabled = true;
 
-    // VÄÄRÄ vastaus
-    if (!isCorrect) {
-      state.currentAttemptsLeft--;
-      renderAttemptDots();
-      showFeedback('Väärä vastaus — yritä uudelleen', 'wrong');
-      input.classList.add('shake');
-      setTimeout(() => input.classList.remove('shake'), 400);
-      addAnswerChip(raw, 'wrong');
-      state.givenAnswers.push({ text: raw, type: 'wrong' });
-      state.totalWrong++;
-      input.value = '';
-      if (state.currentAttemptsLeft <= 0) nextQuestion(true);
-      return;
-    }
+    try {
+      const res = await api.quiz.checkAnswer({
+        questionId: q._id,
+        given: raw,
+      });
 
-    // OIKEA vastaus
-    state.correctAnswersGiven.add(answer);
-    state.totalScore++;
-    addAnswerChip(raw, 'correct');
-    state.givenAnswers.push({ text: raw, type: 'correct' });
-    showFeedback('✓ Oikein! +1 piste', 'correct');
-    input.value = '';
-    input.focus();
-    renderAttemptDots();
+      if (!res.ok) {
+        toast('Virhe tarkistaessa vastausta', 'error');
+        return;
+      }
 
-    // Onko kaikki vaaditut vastaukset annettu?
-    if (state.correctAnswersGiven.size >= q.attempts) {
-      showFeedback(`✓ Erinomainen! Kaikki ${q.attempts} vastausta oikein!`, 'correct');
-      setTimeout(() => nextQuestion(false), 1200);
+      if (res.correct) {
+        // OIKEA vastaus
+        state.correctAnswersGiven.add(answer);
+        state.totalScore++;
+        addAnswerChip(raw, 'correct');
+        state.givenAnswers.push({ text: raw, type: 'correct' });
+        showFeedback('✓ Oikein! +1 piste', 'correct');
+        input.value = '';
+        input.focus();
+        renderAttemptDots();
+
+        // Onko kaikki vaaditut vastaukset annettu?
+        if (state.correctAnswersGiven.size >= q.attempts) {
+          showFeedback(`✓ Erinomainen! Kaikki ${q.attempts} vastausta oikein!`, 'correct');
+          setTimeout(() => nextQuestion(false), 1200);
+        }
+
+      } else {
+        // VÄÄRÄ vastaus
+        state.currentAttemptsLeft--;
+        renderAttemptDots();
+        showFeedback('Väärä vastaus — yritä uudelleen', 'wrong');
+        input.classList.add('shake');
+        setTimeout(() => input.classList.remove('shake'), 400);
+        addAnswerChip(raw, 'wrong');
+        state.givenAnswers.push({ text: raw, type: 'wrong' });
+        state.totalWrong++;
+        input.value = '';
+        if (state.currentAttemptsLeft <= 0) nextQuestion(true);
+      }
+
+    } catch (err) {
+      console.error('checkAnswer virhe:', err);
+      toast('Verkkovirhe — tarkista yhteys', 'error');
+    } finally {
+      state.checking = false;
+      document.getElementById('btn-check').disabled = false;
+      input.focus();
     }
   }
 
@@ -290,7 +256,7 @@ const game = (() => {
     const wrongCount = state.givenAnswers.filter(a => a.type === 'wrong').length;
     state.sessionScores.push({
       category: q.category,
-      jpName: q.jpName,
+      jpName: q.jpName || '',
       correct: correctCount,
       wrong: wrongCount,
       required: q.attempts,
@@ -302,7 +268,7 @@ const game = (() => {
     if (state.currentIndex >= state.questions.length) {
       endGame();
     } else {
-      // Animoitu siirtymä
+      // Animoitu siirtymä — sama kuin ennen
       const card = document.getElementById('question-card');
       card.style.animation = 'none';
       card.style.opacity = '0';
@@ -322,34 +288,26 @@ const game = (() => {
     showScreen('screen-results');
     renderResults();
 
-    // Tallenna pisteet backendiin
+    // Tallenna pisteet backendiin — ENSIN tallennus, SITTEN päivitys
     try {
-      // Rakennetaan answers-lista viimeisimmistä vastauksista
-      // Tässä yksinkertaistettu: lähetetään yhteenveto suoraan
-      await saveScoreToBackend();
+      const saved = await saveScoreToBackend();
+      if (!saved) {
+        console.warn('Pisteiden tallennus epäonnistui');
+      }
     } catch (err) {
       console.warn('Pisteiden tallennus epäonnistui:', err);
     }
 
-    // Päivitä top 10
-    loadLeaderboard();
-    loadMyScores();
+    // Päivitä top 10 ja omat pisteet tallennettuasi
+    await Promise.all([loadLeaderboard(), loadMyScores()]);
   }
 
   // ---- Tallenna pisteet backendiin ----
   async function saveScoreToBackend() {
-    // Luodaan yksinkertainen submit: yksi "yhteenveto-question" per kategoria
-    // Koska backend odottaa questionId-arrayta, käytetään suoraan score-endpointia
-    // Tässä lähetetään pisteet score_saved-lokin kautta
-    const res = await fetch('http://localhost:5000/api/quiz/save-score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        correct: state.totalScore,
-        wrong: state.totalWrong,
-        totalQuestions: state.questions.length,
-      }),
+    const res = await api.quiz.saveScore({
+      correct: state.totalScore,
+      wrong: state.totalWrong,
+      totalQuestions: state.questions.length,
     });
     return res.ok;
   }
@@ -357,7 +315,10 @@ const game = (() => {
   // ---- Tulokset UI ----
   function renderResults() {
     const total = state.questions.length;
-    const pct = total > 0 ? Math.round((state.totalScore / (state.totalScore + state.totalWrong)) * 100) || 0 : 0;
+    // Laske kaikkien kysymysten vaadittujen vastausten summa (esim. 7 × 6 = 42 tai vaihteleva)
+    const totalRequired = state.sessionScores.reduce((sum, s) => sum + s.required, 0);
+    // Prosentti = oikeat / kaikki vaaditut (ei vain oikeat + väärät, ohitetut lasketaan mukaan)
+    const pct = totalRequired > 0 ? Math.round((state.totalScore / totalRequired) * 100) : 0;
 
     // Kanji ja otsikko pisteprosenttien mukaan
     let kanji = '頑', title = 'Hyvä yritys!';

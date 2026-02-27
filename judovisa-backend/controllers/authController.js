@@ -17,9 +17,12 @@ const { sendPasswordResetEmail } = require('../utils/emailUtils');
 
 // ---- Apufunktio: rakenna käyttäjävastaus ----
 function buildUserResponse(user, person) {
+  // displayName säilyttää alkuperäisen kirjoitusasun (esim. "Jarppa")
+  // username on aina lowercase (haku/kirjautuminen)
+  const displayName = person?.displayName || user.username;
   return {
     id: user._id,
-    username: user.username,
+    username: displayName,
     role: user.role,
     firstName: person?.firstName || '',
     lastName: person?.lastName || '',
@@ -61,6 +64,7 @@ exports.register = async (req, res) => {
     // Luo Person (henkilötiedot) — viittaa Useriin
     const person = await Person.create({
       userId: user._id,
+      displayName: username.trim(), // alkuperäinen kirjoitusasu talteen
       firstName,
       lastName,
       email: email.toLowerCase(),

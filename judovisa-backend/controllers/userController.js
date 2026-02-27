@@ -16,7 +16,7 @@ exports.updateMe = async (req, res) => {
     const userUpdates   = {};
     const personUpdates = {};
 
-    // Käyttäjätunnus → Users-kokoelma
+    // Käyttäjätunnus → Users-kokoelma (lowercase), displayName → Person (alkuperäinen)
     if (username !== undefined) {
       if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
         return res.status(400).json({
@@ -30,6 +30,7 @@ exports.updateMe = async (req, res) => {
       });
       if (exists) return res.status(400).json({ success: false, message: 'Käyttäjätunnus on jo käytössä' });
       userUpdates.username = username.toLowerCase();
+      personUpdates.displayName = username.trim(); // alkuperäinen kirjoitusasu
     }
 
     // Henkilötiedot → Person-kokoelma
@@ -80,12 +81,13 @@ exports.updateMe = async (req, res) => {
       details: `Päivitetty: ${[...Object.keys(userUpdates), ...Object.keys(personUpdates)].join(', ')}`,
     });
 
+    const displayName = updatedPerson?.displayName || updatedUser.username;
     res.json({
       success: true,
       message: 'Tiedot päivitetty',
       user: {
         id: updatedUser._id,
-        username: updatedUser.username,
+        username: displayName,
         role: updatedUser.role,
         firstName: updatedPerson?.firstName || '',
         lastName: updatedPerson?.lastName || '',

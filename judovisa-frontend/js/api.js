@@ -61,14 +61,15 @@ const api = {
 
   // ---- QUIZ ----
   quiz: {
-    getQuestions: (count) => api.request(`/quiz/questions?count=${count || 10}`),
-    submitAnswers: (d)    => api.request('/quiz/submit', { method: 'POST', body: JSON.stringify(d) }),
+    getQuestions:  (count) => api.request(`/quiz/questions?count=${count || 10}`),
+    // Tarkistaa yksittäisen vastauksen backendissä — vastauksia ei koskaan palauteta frontendiin
+    checkAnswer:   (d)     => api.request('/quiz/check-answer', { method: 'POST', body: JSON.stringify(d) }),
+    submitAnswers: (d)     => api.request('/quiz/submit',       { method: 'POST', body: JSON.stringify(d) }),
+    saveScore:     (d)     => api.request('/quiz/save-score',   { method: 'POST', body: JSON.stringify(d) }),
   },
 
   // ---- SCORES (leaderboard) ----
   scores: {
-    // Haetaan top 10 suoraan scores-kokoelmasta aggregaatiolla
-    // Tässä käytetään omaa lightweight-endpointia tai admin-reittiä
     getTop10: () => api.request('/quiz/leaderboard'),
   },
 

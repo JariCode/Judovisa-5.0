@@ -5,8 +5,22 @@ const Question = require('../models/Question');
 const Score = require('../models/Score');
 const { createLog } = require('../utils/logUtils');
 
+// Normalisoi vastauksia:
+// - pienet kirjaimet
+// - diakriittiset merkit pois
+// - KAIKKI välilyönnit, väliviivat ja alaviivat poistetaan
+// Näin "Kesa Gatame", "kesa-gatame", "ke sa ga ta me", "KESA GATAME" kaikki täsmäävät
+function normalizeAnswer(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // diakriittiset pois
+    .replace(/[\s\-_]+/g, '');        // välilyönnit, väliviivat, alaviivat pois
+}
+
 // ---- HAE VISALON KYSYMYKSET ----
-// TÄRKEÄÄ: correctIndex ei koskaan palaudu frontendiin
+// TÄRKEÄÄ: answers ei koskaan palaudu frontendiin
 exports.getQuestions = async (req, res) => {
   try {
     const { count = 10, category = '', difficulty = '' } = req.query;
@@ -19,14 +33,15 @@ exports.getQuestions = async (req, res) => {
     const questions = await Question.aggregate([
       { $match: query },
       { $sample: { size: Number(count) } },
-      // Poistetaan correctIndex aggregaatiossa - ei ikinä frontendiin
+      // Poistetaan answers - ei koskaan frontendiin
       {
         $project: {
-          question: 1,
-          answers: 1,
+          _id: 1,
+          questionText: 1,
           category: 1,
-          difficulty: 1,
-          // correctIndex: EI MUKANA
+          jpName: 1,
+          attempts: 1,
+          // answers: EI MUKANA
         },
       },
     ]);
@@ -57,12 +72,41 @@ exports.getQuestions = async (req, res) => {
   }
 };
 
+// ---- TARKISTA YKSITTÄINEN VASTAUS ----
+// Frontend lähettää: { questionId, given }
+// Backend palauttaa: { correct: true/false }
+// Oikeita vastauksia EI koskaan lähetetä takaisin frontendiin
+exports.checkAnswer = async (req, res) => {
+  try {
+    const { questionId, given } = req.body;
+    if (!questionId || typeof given !== 'string') {
+      return res.status(400).json({ success: false, message: 'questionId ja given vaaditaan' });
+    }
+
+    const q = await Question.findById(questionId).lean();
+    if (!q || !q.isActive) {
+      return res.status(404).json({ success: false, message: 'Kysymystä ei löytynyt' });
+    }
+
+    // Normalisoi käyttäjän vastaus
+    const normalGiven = normalizeAnswer(given);
+
+    // Normalisoi kaikki hyväksytyt vastaukset ja tarkista täsmääkö
+    const correctSet = new Set((q.answers || []).map(a => normalizeAnswer(a)));
+    const isCorrect = correctSet.has(normalGiven);
+
+    // Palautetaan VAIN oikeellisuus — ei oikeaa vastausta, ei vastauslistaa
+    res.json({ success: true, correct: isCorrect });
+  } catch (error) {
+    console.error('checkAnswer virhe:', error);
+    res.status(500).json({ success: false, message: 'Palvelinvirhe' });
+  }
+};
+
 // ---- TARKISTA VASTAUKSET JA TALLENNA PISTEET ----
-// Vastausten tarkistus tapahtuu AINA backendissä
 exports.submitAnswers = async (req, res) => {
   try {
     const { answers } = req.body;
-    // answers: [{ questionId: "...", selectedIndex: 2 }, ...]
 
     if (!Array.isArray(answers) || answers.length === 0) {
       return res.status(400).json({
@@ -71,7 +115,6 @@ exports.submitAnswers = async (req, res) => {
       });
     }
 
-    // Hae oikeat vastaukset tietokannasta
     const questionIds = answers.map((a) => a.questionId);
     const questions = await Question.find({
       _id: { $in: questionIds },
@@ -85,7 +128,6 @@ exports.submitAnswers = async (req, res) => {
       });
     }
 
-    // Tarkista vastaukset
     const results = answers.map((answer) => {
       const question = questions.find(
         (q) => q._id.toString() === answer.questionId
@@ -105,7 +147,6 @@ exports.submitAnswers = async (req, res) => {
     const correctCount = results.filter((r) => r.correct).length;
     const wrongCount = results.length - correctCount;
 
-    // Tallenna pisteet
     const score = await Score.create({
       userId: req.user._id,
       username: req.user.username,

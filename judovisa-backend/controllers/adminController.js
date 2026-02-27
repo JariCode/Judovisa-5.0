@@ -53,7 +53,7 @@ exports.getAllUsers = async (req, res) => {
       const p = personMap[u._id.toString()];
       return {
         _id: u._id,
-        username: u.username,
+        username: p?.displayName || u.username,
         role: u.role,
         createdAt: u.createdAt,
         firstName: p?.firstName || '',
@@ -104,7 +104,7 @@ exports.getUserById = async (req, res) => {
       success: true,
       user: {
         _id: user._id,
-        username: user.username,
+        username: person?.displayName || user.username,
         role: user.role,
         createdAt: user.createdAt,
         firstName: person?.firstName || '',
@@ -126,7 +126,10 @@ exports.updateUser = async (req, res) => {
     const userUpdates   = {};
     const personUpdates = {};
 
-    if (username) userUpdates.username = username.toLowerCase().trim();
+    if (username) {
+      userUpdates.username = username.toLowerCase().trim();
+      personUpdates.displayName = username.trim();
+    }
     if (firstName) personUpdates.firstName = firstName.trim();
     if (lastName)  personUpdates.lastName  = lastName.trim();
     if (email)     personUpdates.email     = email.toLowerCase().trim();
@@ -168,7 +171,7 @@ exports.updateUser = async (req, res) => {
       message: 'Käyttäjän tiedot päivitetty',
       user: {
         _id: updatedUser._id,
-        username: updatedUser.username,
+        username: updatedPerson?.displayName || updatedUser.username,
         role: updatedUser.role,
         firstName: updatedPerson?.firstName || '',
         lastName: updatedPerson?.lastName || '',
