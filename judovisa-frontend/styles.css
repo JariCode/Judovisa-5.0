@@ -1540,3 +1540,164 @@ select.admin-select option { background: var(--ink-soft); }
 .pw-toggle:hover {
   color: var(--gold);
 }
+
+/* ============================================================
+   DIALOG MODAALIT (korvaa selaimen confirm/prompt/alert)
+   ============================================================ */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(26, 18, 8, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dialog-overlay.visible {
+  opacity: 1;
+}
+
+.dialog-box {
+  width: 100%;
+  max-width: 400px;
+  background: #231a10;
+  border: 1px solid rgba(184, 146, 10, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transform: translateY(10px) scale(0.97);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dialog-overlay.visible .dialog-box {
+  transform: translateY(0) scale(1);
+}
+
+.dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  margin: 0 auto 4px;
+}
+
+.dialog-icon.warn {
+  background: rgba(184, 146, 10, 0.12);
+  border: 1px solid rgba(184, 146, 10, 0.25);
+  color: var(--gold);
+}
+
+.dialog-icon.danger {
+  background: rgba(192, 57, 43, 0.12);
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  color: #e87058;
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+}
+
+.dialog-message {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.dialog-message strong {
+  color: var(--parchment);
+}
+
+.dialog-input-wrap {
+  margin-top: 4px;
+}
+
+.dialog-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(184, 146, 10, 0.25) !important;
+  border-radius: 9px !important;
+  padding: 12px 16px !important;
+  color: var(--white) !important;
+  font-family: var(--font-body) !important;
+  font-size: 15px !important;
+  outline: none;
+  transition: all var(--transition);
+}
+
+.dialog-input:focus {
+  border-color: var(--gold) !important;
+  background: rgba(255,255,255,0.09) !important;
+  box-shadow: 0 0 0 3px rgba(184, 146, 10, 0.12) !important;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.dialog-btn {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 9px;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.02em;
+}
+
+.dialog-btn.cancel {
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dialog-btn.cancel:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--parchment);
+}
+
+.dialog-btn.confirm {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.dialog-btn.confirm:hover {
+  background: var(--gold-light);
+  transform: translateY(-1px);
+}
+
+.dialog-btn.confirm-danger {
+  background: var(--red);
+  color: var(--white);
+}
+
+.dialog-btn.confirm-danger:hover {
+  background: var(--red-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--red-glow);
+}
+
+.dialog-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}

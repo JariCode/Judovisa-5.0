@@ -111,14 +111,20 @@ const profile = (() => {
     }
   });
 
-  // ---- Poista tili ----
+  // ---- Poista tili — käyttää showConfirm() ----
   document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
     const password = document.getElementById('delete-confirm-pw').value;
     if (!password) {
       return showMsg('profile-delete-message', 'Vahvista salasanalla');
     }
 
-    const confirmed = confirm('Haluatko varmasti poistaa tilisi? Tätä ei voi peruuttaa!');
+    const confirmed = await showConfirm({
+      title: 'Poista tili pysyvästi',
+      message: 'Kaikki tietosi poistetaan eikä tätä voi peruuttaa.<br>Haluatko varmasti jatkaa?',
+      confirmText: 'Poista tili',
+      cancelText: 'Peruuta',
+      danger: true,
+    });
     if (!confirmed) return;
 
     const res = await api.user.deleteMe({ password });

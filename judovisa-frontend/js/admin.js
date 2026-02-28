@@ -78,9 +78,16 @@ const adminPanel = (() => {
     renderPagination('admin-users-pagination', res.pagination, (p) => loadUsers(p));
   }
 
-  // ---- Muokkaa käyttäjää ----
+  // ---- Muokkaa käyttäjää — käyttää showPrompt() ----
   async function editUser(id, username) {
-    const newUsername = prompt(`Uusi käyttäjätunnus (nykyinen: ${username})`);
+    const newUsername = await showPrompt({
+      title: 'Muokkaa käyttäjätunnusta',
+      message: `Nykyinen tunnus: <strong>${escHtml(username)}</strong>`,
+      placeholder: 'Uusi käyttäjätunnus',
+      defaultValue: username,
+      confirmText: 'Tallenna',
+    });
+
     if (!newUsername || newUsername === username) return;
 
     const res = await api.admin.updateUser(id, { username: newUsername });
@@ -92,24 +99,39 @@ const adminPanel = (() => {
     }
   }
 
-  // ---- Vaihda rooli ----
+  // ---- Vaihda rooli — käyttää showConfirm() ----
   async function toggleRole(id, currentRole, username) {
     const newRole = currentRole === 'admin' ? 'player' : 'admin';
-    const confirmed = confirm(`Vaihdetaanko ${username} rooli: ${currentRole} → ${newRole}?`);
+    const newRoleLabel     = newRole === 'admin' ? 'Admin' : 'Pelaaja';
+    const currentRoleLabel = currentRole === 'admin' ? 'Admin' : 'Pelaaja';
+
+    const confirmed = await showConfirm({
+      title: 'Vaihda rooli',
+      message: `Vaihdetaanko <strong>${escHtml(username)}</strong> rooli:<br>${currentRoleLabel} → ${newRoleLabel}`,
+      confirmText: 'Vaihda',
+      cancelText: 'Peruuta',
+      danger: false,
+    });
     if (!confirmed) return;
 
     const res = await api.admin.changeRole(id, { role: newRole });
     if (res.ok) {
-      toast(`Rooli vaihdettu: ${username} on nyt ${newRole}`, 'success');
+      toast(`Rooli vaihdettu: ${username} on nyt ${newRoleLabel}`, 'success');
       loadUsers(userPage);
     } else {
       toast(res.message || 'Virhe', 'error');
     }
   }
 
-  // ---- Poista käyttäjä ----
+  // ---- Poista käyttäjä — käyttää showConfirm() ----
   async function deleteUser(id, username) {
-    const confirmed = confirm(`Poistetaanko käyttäjä ${username}? Tätä ei voi peruuttaa.`);
+    const confirmed = await showConfirm({
+      title: 'Poista käyttäjä',
+      message: `Poistetaanko käyttäjä <strong>${escHtml(username)}</strong>?<br>Tätä toimintoa ei voi peruuttaa.`,
+      confirmText: 'Poista',
+      cancelText: 'Peruuta',
+      danger: true,
+    });
     if (!confirmed) return;
 
     const res = await api.admin.deleteUser(id);
@@ -218,7 +240,6 @@ const adminPanel = (() => {
     container.innerHTML = '';
     const { page, pages } = pagination;
 
-    // Näytä sivunumerot ikkunan kautta
     const range = [];
     for (let i = Math.max(1, page - 2); i <= Math.min(pages, page + 2); i++) {
       range.push(i);

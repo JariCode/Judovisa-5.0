@@ -334,15 +334,15 @@
         <form id="form-change-password" class="profile-form" novalidate>
           <div class="field-group">
             <label>Nykyinen salasana</label>
-            <input type="password" id="pw-current" placeholder="••••••••">
+            <div class="pw-wrap"><input type="password" id="pw-current" placeholder="••••••••"><button type="button" class="pw-toggle" onclick="togglePassword('pw-current')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           </div>
           <div class="field-group">
             <label>Uusi salasana</label>
-            <input type="password" id="pw-new" placeholder="••••••••">
+            <div class="pw-wrap"><input type="password" id="pw-new" placeholder="••••••••"><button type="button" class="pw-toggle" onclick="togglePassword('pw-new')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           </div>
           <div class="field-group">
             <label>Vahvista uusi salasana</label>
-            <input type="password" id="pw-new2" placeholder="••••••••">
+            <div class="pw-wrap"><input type="password" id="pw-new2" placeholder="••••••••"><button type="button" class="pw-toggle" onclick="togglePassword('pw-new2')" aria-label="Näytä/piilota salasana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           </div>
           <div class="auth-message" id="profile-pw-message"></div>
           <button type="submit" class="btn-primary"><span>Vaihda salasana</span></button>

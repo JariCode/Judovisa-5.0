@@ -184,20 +184,25 @@ const game = (() => {
       }
 
       if (res.correct) {
-        // OIKEA vastaus
+        // OIKEA vastaus — kuluttaa myös yrityksen
         state.correctAnswersGiven.add(answer);
+        state.currentAttemptsLeft--;
         state.totalScore++;
         addAnswerChip(raw, 'correct');
         state.givenAnswers.push({ text: raw, type: 'correct' });
-        showFeedback('✓ Oikein! +1 piste', 'correct');
         input.value = '';
         input.focus();
         renderAttemptDots();
 
-        // Onko kaikki vaaditut vastaukset annettu?
+        // Onko kaikki vaaditut vastaukset annettu TAI yritykset loppu?
         if (state.correctAnswersGiven.size >= q.attempts) {
           showFeedback(`✓ Erinomainen! Kaikki ${q.attempts} vastausta oikein!`, 'correct');
           setTimeout(() => nextQuestion(false), 1200);
+        } else if (state.currentAttemptsLeft <= 0) {
+          showFeedback('✓ Oikein! Yritykset käytetty.', 'correct');
+          setTimeout(() => nextQuestion(true), 1200);
+        } else {
+          showFeedback('✓ Oikein! +1 piste', 'correct');
         }
 
       } else {
@@ -304,10 +309,12 @@ const game = (() => {
 
   // ---- Tallenna pisteet backendiin ----
   async function saveScoreToBackend() {
+    // totalRequired = kaikkien kysymysten vaadittujen vastausten summa (ei kysymysten lukumäärä)
+    const totalRequired = state.sessionScores.reduce((sum, s) => sum + s.required, 0);
     const res = await api.quiz.saveScore({
       correct: state.totalScore,
       wrong: state.totalWrong,
-      totalQuestions: state.questions.length,
+      totalQuestions: totalRequired,
     });
     return res.ok;
   }

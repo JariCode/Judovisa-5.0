@@ -16,6 +16,103 @@ function toast(message, type = 'info', duration = 3500) {
 }
 window.toast = toast;
 
+// ---- Teeman mukainen vahvistusmodaali (korvaa confirm()) ----
+// Palauttaa Promisen: true = hyväksytty, false = peruutettu
+function showConfirm({ title, message, confirmText = 'Vahvista', cancelText = 'Peruuta', danger = false }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+
+    overlay.innerHTML = `
+      <div class="dialog-box" role="dialog" aria-modal="true">
+        <div class="dialog-icon ${danger ? 'danger' : 'warn'}">
+          ${danger
+            ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+            : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+          }
+        </div>
+        <h3 class="dialog-title">${title}</h3>
+        <p class="dialog-message">${message}</p>
+        <div class="dialog-actions">
+          <button class="dialog-btn cancel">${cancelText}</button>
+          <button class="dialog-btn ${danger ? 'confirm-danger' : 'confirm'}">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const close = (result) => {
+      overlay.classList.remove('visible');
+      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+      resolve(result);
+    };
+
+    overlay.querySelector('.cancel').addEventListener('click', () => close(false));
+    overlay.querySelector(`.${danger ? 'confirm-danger' : 'confirm'}`).addEventListener('click', () => close(true));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
+    });
+
+    // Fokusoi vahvistusnappi
+    setTimeout(() => overlay.querySelector(`.${danger ? 'confirm-danger' : 'confirm'}`).focus(), 50);
+  });
+}
+window.showConfirm = showConfirm;
+
+// ---- Teeman mukainen syötemodaali (korvaa prompt()) ----
+// Palauttaa Promisen: string = arvo, null = peruutettu
+function showPrompt({ title, message, placeholder = '', defaultValue = '', confirmText = 'OK', cancelText = 'Peruuta' }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+
+    overlay.innerHTML = `
+      <div class="dialog-box" role="dialog" aria-modal="true">
+        <div class="dialog-icon warn">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <h3 class="dialog-title">${title}</h3>
+        ${message ? `<p class="dialog-message">${message}</p>` : ''}
+        <div class="dialog-input-wrap">
+          <input type="text" class="dialog-input" placeholder="${placeholder}" value="${defaultValue}" autocomplete="off">
+        </div>
+        <div class="dialog-actions">
+          <button class="dialog-btn cancel">${cancelText}</button>
+          <button class="dialog-btn confirm">OK</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const input = overlay.querySelector('.dialog-input');
+
+    const close = (result) => {
+      overlay.classList.remove('visible');
+      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+      resolve(result);
+    };
+
+    overlay.querySelector('.cancel').addEventListener('click', () => close(null));
+    overlay.querySelector('.confirm').addEventListener('click', () => {
+      const val = input.value.trim();
+      close(val || null);
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { const val = input.value.trim(); close(val || null); }
+      if (e.key === 'Escape') close(null);
+    });
+
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+  });
+}
+window.showPrompt = showPrompt;
+
 // ---- Näkymien hallinta ----
 const app = {
   currentView: null,
@@ -65,33 +162,5 @@ async function init() {
   app.showView('view-auth');
   document.documentElement.classList.remove('preload');
 }
-
-// ---- Leaderboard endpoint — lisätään quiz-routeen backendissä ----
-// Huom: lisää tämä reitti judovisa-backend/routes/quizRoutes.js:iin:
-//
-// router.get('/leaderboard', protect, async (req, res) => {
-//   try {
-//     const Score = require('../models/Score');
-//     const scores = await Score.aggregate([
-//       { $group: { _id: '$userId', username: { $first: '$username' }, bestScore: { $max: '$correct' } } },
-//       { $sort: { bestScore: -1 } },
-//       { $limit: 10 },
-//       { $project: { _id: 0, username: 1, bestScore: 1 } }
-//     ]);
-//     res.json({ ok: true, success: true, scores });
-//   } catch { res.status(500).json({ success: false }); }
-// });
-//
-// Ja save-score endpoint:
-// router.post('/save-score', protect, async (req, res) => {
-//   try {
-//     const Score = require('../models/Score');
-//     const Log = require('../models/Log');
-//     const { correct, wrong, totalQuestions } = req.body;
-//     const score = await Score.create({ userId: req.user._id, username: req.user.username, correct, wrong, totalQuestions });
-//     await Log.create({ userId: req.user._id, username: req.user.username, event: 'quiz_finished', metadata: { details: `${correct}/${totalQuestions} (${score.percentage}%)` } });
-//     res.json({ success: true, score });
-//   } catch { res.status(500).json({ success: false }); }
-// });
 
 document.addEventListener('DOMContentLoaded', init);
